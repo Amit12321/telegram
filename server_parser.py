@@ -1,21 +1,10 @@
-from abc import ABCMeta, abstractmethod
 import json
 import command
 
-
-class Parser(metaclass=ABCMeta):
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def parse(self, data):
-        pass
-
-class ParseError(Exception):
-    pass
+from common import ParseError, Parser
 
 
-class JSONParser(Parser):
+class ServerParser(Parser):
     def __init__(self, server):
         self._server = server
 

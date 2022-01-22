@@ -1,7 +1,8 @@
 import selectors
 
-from connections import ChatClientPool, TCPServer, ReadError, WriteError
-from server_parser import JSONParser, ParseError
+from users_pool import ChatClientPool
+from network import TCPServer, ReadError, WriteError
+from server_parser import ServerParser, ParseError
 from common import Message, IChatServer
 from logger_factory import LoggerFactory
 
@@ -13,12 +14,13 @@ logger = LoggerFactory.get_logger(LOG_FILE, LOG_LEVEL)
 
 class ChatServer(IChatServer):
     MAX_CONNECTIONS_WAITING = 1000
+    SERVER_NAME = "SERVER"
 
     def __init__(self, host, port):
         self._host = host
         self._port = port
         self._clients = ChatClientPool()
-        self._parser = JSONParser(self)
+        self._parser = ServerParser(self)
         self._prepare_server()
 
     def _prepare_server(self):
@@ -52,7 +54,7 @@ class ChatServer(IChatServer):
             self._selector.unregister(conn)
             return
             
-        if self._clients.does_name_exist(name) or name.lower() == "server":
+        if self._clients.does_name_exist(name) or name.upper() == self.SERVER_NAME:
             conn.write("EXIST")
             self._selector.unregister(conn)
             return
@@ -72,10 +74,14 @@ class ChatServer(IChatServer):
         self._clients.remove_connection(conn)
         
     def _add_message(self, message, receiver_name = None):
-        # register every client connection for writing (broadcast recent messages)
+        """
+        If reciever_name is None, broadcasts the message to all users.
+        otherwise, send it only to reciever, if exists.
+        """
         if receiver_name is not None and self._clients.does_name_exist(receiver_name):
             self._clients.add_message_to_one(receiver_name, message)
             conn = self._clients.get_connection_for_name(receiver_name)
+            # register every client connection for writing (broadcast recent messages)
             self._selector.modify(conn, selectors.EVENT_READ | selectors.EVENT_WRITE, self._read_write)
             logger.info(f"Sending '{message.text}' from {message.user} to user {receiver_name}.")
         else:
@@ -85,7 +91,7 @@ class ChatServer(IChatServer):
                 self._selector.modify(conn, selectors.EVENT_READ | selectors.EVENT_WRITE, self._read_write)
 
     def _add_server_message(self, text, username = None):
-        self._add_message(Message("SERVER", text), username)
+        self._add_message(Message(self.SERVER_NAME, text), username)
 
     def _read_message(self, conn):
         username = self._clients.get_name_for_connection(conn)

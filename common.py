@@ -1,20 +1,30 @@
 import collections
-import enum
 
 from abc import ABCMeta, abstractmethod
 
 Message = collections.namedtuple("Message", ["user", "text"])
 
-class CommandType(str, enum.Enum):
-    HELP = "help"
-    NAME = "name"
-    ONLINE = "online"
-    PRIVATE = "private"
-    MESSAGE = "message"
-    QUIT = "quit"
-    INVALID = "invalid"
 
-COMMAND_TYPES = CommandType.__members__.values()
+class Serializer(metaclass=ABCMeta):
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def serialize(self, data):
+        pass
+
+
+class Parser(metaclass=ABCMeta):
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def parse(self, data):
+        pass
+
+class ParseError(Exception):
+    pass
+
 
 class Singleton(type):
     def __init__(cls, *args, **kwargs):

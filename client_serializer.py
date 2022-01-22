@@ -1,25 +1,15 @@
-from abc import ABCMeta, abstractmethod
 import json
 
-from common import COMMAND_TYPES
+from common import Serializer
 
-class Serializer(metaclass=ABCMeta):
-    def __init__(self):
-        pass
 
-    @abstractmethod
-    def serialize(self, data):
-        pass
-
-class JSONSerializer(Serializer):
+class ClientSerializer(Serializer):
     COMMAND_SIGN = "@"
 
     def serialize(self, data: str):
         params = data.split(" ")
         if params[0].startswith(self.COMMAND_SIGN):
             command = params[0][1:]
-            if command not in COMMAND_TYPES:
-                command = "invalid"
         else:
             command = "message"
 

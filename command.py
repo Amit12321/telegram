@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
-import collections
-
 from common import Message, IChatServer
+
 
 class ChatCommand(metaclass=ABCMeta):
     def __init__(self, server: IChatServer, command, **kwargs) -> None:
@@ -34,7 +33,7 @@ class NameCommand(ChatCommand):
             self._server._add_server_message(f"Wrong syntax! the syntax of the name command is: @name [new_name]", self._user)
             return
         new_name = self._params[1]
-        if not new_name.upper() == "SERVER" and self._server._clients.change_name(self._user, new_name):
+        if not new_name.upper() == self._server.SERVER_NAME and self._server._clients.change_name(self._user, new_name):
             self._server._add_server_message(f"The user {self._user} changed his name to {new_name}")
         else:
             self._server._add_server_message(f"The name {new_name} is already taken", self._user)
@@ -83,17 +82,22 @@ class CommandFactory:
         self._commands[command] = command_class
 
     def get_command(self, server, command_name, **kwargs):
-        command = self._commands.get(command_name)
-        if not command:
-            command = InvalidCommand
+        command = self._commands.get(command_name, InvalidCommand)
         return command(server, command_name, **kwargs)
 
 
+COMMAND_TYPES = {
+    "help": HelpCommand,
+    "name": NameCommand,
+    "online": OnlineCommand,
+    "private":PrivateCommand,
+    "message": MessageCommand,
+    "quit": QuitCommand,
+    "invalid": InvalidCommand
+}
+
 factory = CommandFactory()
-factory.register_command("help", HelpCommand)
-factory.register_command("message", MessageCommand)
-factory.register_command("online", OnlineCommand)
-factory.register_command("quit", QuitCommand)
-factory.register_command("private", PrivateCommand)
-factory.register_command("name", NameCommand)
-factory.register_command("invalid", InvalidCommand)
+
+for type, type_class in COMMAND_TYPES.items():
+    factory.register_command(type, type_class)
+

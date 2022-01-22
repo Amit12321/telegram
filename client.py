@@ -2,8 +2,8 @@ import argparse
 import threading
 
 from screen import Screen
-from connections import TCPClient, ReadError, WriteError
-from client_serializer import JSONSerializer
+from network import TCPClient, ReadError, WriteError
+from client_serializer import ClientSerializer
 
 
 class ChatClient:
@@ -12,7 +12,7 @@ class ChatClient:
        self._port = int(kwargs["port"])
        self._running = True
        self._screen = Screen()
-       self._serializer = JSONSerializer()
+       self._serializer = ClientSerializer()
        self._prepare_client()
 
     def _prepare_client(self):
